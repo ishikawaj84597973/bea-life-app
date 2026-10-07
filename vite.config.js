@@ -1,4 +1,9 @@
 import { defineConfig } from 'vite';
+import { fileURLToPath } from 'node:url';
 
-// Relative asset URLs work under GitHub Pages' /bea-life-app/ path too.
-export default defineConfig({ base: './' });
+export default defineConfig({
+  root: 'web',
+  resolve: { alias: { '/src': fileURLToPath(new URL('./src', import.meta.url)) } },
+  base: '/bea-life-app/',
+  build: { outDir: '../dist', emptyOutDir: true }
+});

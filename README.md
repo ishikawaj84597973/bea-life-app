@@ -40,8 +40,12 @@ npm test
 
 このオンボーディング画面はWebプレビューに対応していません。package.jsonの変更だけでは「次で開く」にブラウザの選択肢を追加できません。実際のスマートフォンから利用するには、`npm run build` で作成する `dist/` を静的サイトのホスティングサービスに公開してください。
 
-## GitHub Pagesで無料公開
+## GitHub Pagesでの公開
 
-`.github/workflows/deploy-pages.yml` が main へのプッシュ時に公開用ビルドを自動配信します。GitHubのリポジトリで Settings → Pages → Build and deployment → Source を **GitHub Actions** に設定してください。設定後、Actions の「Publish Bea Life to GitHub Pages」から Run workflow を実行できます。
+現在は Settings → Pages → Source: Deploy from a branch、main、/(root) で公開しています。
 
-公開が成功すると通常 `https://ishikawaj84597973.github.io/bea-life-app/` で表示できます。このURLは配信完了まで利用できません。無料のGitHub Pagesは公開リポジトリで利用可能です。非公開リポジトリの場合はプランを確認し、公開範囲の変更は慎重に判断してください。
+編集後は `npm run build` を実行して、生成されたルートの `index.html`、`assets/`、`.nojekyll` をソース変更と一緒にコミット・プッシュしてください。`web/index.html` が開発用HTMLです。ルートの `index.html` は生成済みなので直接編集しません。ビルド出力のパスは `/bea-life-app/` です。
+
+公開URL: https://ishikawaj84597973.github.io/bea-life-app/
+
+GitHubがmainを公開するまで数分かかる場合があります。将来GitHub Actions方式に切り替える場合のみ、PagesのSourceをGitHub Actionsに変更し、手動実行用のPublish Bea Lifeワークフローを使ってください。現在のブランチ公開では不要です。
