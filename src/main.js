@@ -94,3 +94,5 @@ window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0);document
 render();
 // QRコードスタンプ機能（開発準備）
 const QR_STAMP_MODE = true;
+// QRコード読み取り用の準備
+const QR_STAMP_ENABLED = true;
