@@ -111,3 +111,7 @@ function handleQRScan(qrData) {
 
   alert('読み取りデータ：' + qrData);
 }
+// QRコード読み取り画面（テスト用）
+function showQRScanner() {
+  alert('QRコード読み取り機能を準備中です');
+}
