@@ -102,3 +102,12 @@ function confirmQRStamp() {
     '職員によるスタンプ付与を確認しましたか？'
   );
 }
+// QRコード読み取り結果の確認（テスト用）
+function handleQRScan(qrData) {
+  if (!qrData) {
+    alert('QRコードを読み取れませんでした');
+    return;
+  }
+
+  alert('読み取りデータ：' + qrData);
+}
