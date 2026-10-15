@@ -92,3 +92,5 @@ function persist(value,message) { const next={...state}; if(value) next.welcome=
 app.addEventListener('click',e=>{ const button=e.target.closest('button'); if(!button || button.disabled)return; if(button.dataset.stamp){handleStampAction(button.dataset.stamp);return;} if(button.dataset.filter){filter=button.dataset.filter;render();} const action=button.dataset.action; if(action==='save')persist('saved','クーポンを保存しました'); if(action==='use')document.querySelector('#use-dialog').showModal(); if(action==='confirm')persist('used','体験用クーポンを使用しました'); if(action==='reset')persist(null,'体験用クーポンをリセットしました'); });
 window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0);document.querySelector('main').setAttribute('tabindex','-1');document.querySelector('main').focus({preventScroll:true});});
 render();
+// QRコードスタンプ機能（開発準備）
+const QR_STAMP_MODE = true;
