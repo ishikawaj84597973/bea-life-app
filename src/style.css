@@ -5,3 +5,16 @@
 .stamp-card{max-width:700px;margin:auto;border:1px solid #c8d2af;border-radius:12px;padding:34px;background:#edf0df}.stamp-card-heading{display:flex;justify-content:space-between;align-items:start;gap:14px}.stamp-card-heading h2{font-size:28px}.stamp-card-heading .pill{white-space:nowrap}.stamp-count{margin:22px 0 18px;font-size:14px}.stamp-count strong{font:42px Georgia,serif;color:#567042}.stamp-count>span{display:block;font-size:13px;color:#567042}.stamp-grid{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.stamp-slot{aspect-ratio:1;border:1px dashed #afb998;border-radius:50%;background:#fff9ed;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#7a846b}.stamp-slot>span{font:26px Georgia,serif}.stamp-slot small{font-size:8px;letter-spacing:.06em}.stamp-slot.stamped{background:#374934;color:#fff9ed;border-style:solid}.stamp-slot.stamped>span{font-size:36px;color:#f4d98a}.stamp-reward{margin-top:24px;padding-top:20px;border-top:1px dashed #afb998}.stamp-reward h3{font-size:19px}.stamp-reward p{font-size:12px;margin-top:8px;color:#6c7464}.stamp-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}.stamp-banner{background:#f6e8ba}.desktop-nav{gap:20px}
 @media(min-width:761px) and (max-width:1000px){.site-header{padding:20px;gap:15px}.desktop-nav{gap:12px;font-size:11px}.header-coupon{padding:8px 12px}.logo strong{font-size:27px}}
 @media(max-width:760px){.stamp-card{padding:22px 18px}.stamp-card-heading h2{font-size:23px}.stamp-card-heading .eyebrow{font-size:8px}.stamp-grid{gap:8px}.stamp-slot>span{font-size:21px}.stamp-slot.stamped>span{font-size:28px}.stamp-slot small{font-size:6px}.stamp-actions{flex-direction:column}.stamp-actions .button{width:100%}.mobile-nav a{min-width:0;font-size:8px}.dialog-actions{flex-wrap:wrap}}
+
+
+/* Bea Life 昼と夜のデザイン */
+body {
+  background: linear-gradient(135deg, #fff4c7, #ffe0f0);
+  color: #333;
+}
+
+body.night-mode {
+  background: linear-gradient(135deg, #100b2e, #30104d);
+  color: #ffffff;
+}
+  
