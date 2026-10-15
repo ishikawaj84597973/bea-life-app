@@ -96,3 +96,9 @@ render();
 const QR_STAMP_MODE = true;
 // QRコード読み取り用の準備
 const QR_STAMP_ENABLED = true;
+// QRスタンプ読み取り時の確認
+function confirmQRStamp() {
+  return window.confirm(
+    '職員によるスタンプ付与を確認しましたか？'
+  );
+}
