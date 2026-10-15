@@ -1,6 +1,6 @@
 import './style.css';
 
-const pages = [ ['home','⌂','ホーム'], ['news','▤','お知らせ'], ['events','▦','イベント'], ['coupons','◇','クーポン'], ['shop','♡','店舗情報'] ];
+const pages = [ ['home','⌂','ホーム'], ['news','▤','お知らせ'], ['events','▦','イベント'], ['coupons','◇','クーポン'], ['stamps','✳','スタンプ'], ['shop','♡','店舗情報'] ];
 const demo = '<span class="demo">掲載サンプル</span>';
 const notices = [
   ['お店から','Bea LifeのWebアプリへようこそ！','昼も夜も、ちょっと寄り道したくなる場所に。お店の情報をこちらからお届けします。'],
@@ -10,6 +10,16 @@ const notices = [
 const events = [ ['🍬','駄菓子を楽しむ日','好きなお菓子を持ち寄るような、わくわくする時間。','昼のイベント'], ['🎵','レトロ音楽ナイト','懐かしい音楽と、おしゃべりを楽しむ夜。','夜のイベント'] ];
 let state;
 try { state = JSON.parse(localStorage.getItem('bea-coupons-v1') || '{}'); if (!state || typeof state !== 'object' || Array.isArray(state)) state = {}; } catch { state = {}; }
+const stampKey = 'bea-stamps-v1';
+function readStampCard() {
+ try {
+  const card = JSON.parse(localStorage.getItem(stampKey) || 'null');
+  if (card && card.saved === true && Number.isInteger(card.count) && card.count >= 0 && card.count <= 10 && typeof card.used === 'boolean' && (!card.used || card.count === 10)) return card;
+ } catch {}
+ return { saved: false, count: 0, used: false };
+}
+let stampCard = readStampCard();
+let stampPending = null;
 let filter = 'すべて';
 let toastTimer;
 const app = document.querySelector('#app');
@@ -18,21 +28,67 @@ const heading = (en,title,description) => `<header class="page-heading"><span cl
 const sectionTitle = (en,title,route) => `<div class="section-title"><div><span class="eyebrow">${en}</span><h2>${title}</h2></div>${route ? `<a href="#${route}">すべて見る <span>↗</span></a>` : ''}</div>`;
 function noticeList(items) { return `<div class="news-list">${items.map(([tag,title,body],i)=>`<details class="notice"><summary><span class="notice-meta">${demo}<span class="tag tag-${i}">${tag}</span></span><span class="notice-title">${title}</span><span class="arrow">＋</span></summary><p>${body}</p></details>`).join('')}</div>`; }
 function eventCards() { return `<div class="event-grid">${events.map(([icon,title,body,tag],i)=>`<article class="event-card"><div class="event-art art-${i}" aria-hidden="true"><span>${icon}</span><small>BEA LIFE · GOOD TIMES</small></div><div class="event-copy">${demo}<span class="tag">${tag}</span><h3>${title}</h3><p>${body}</p><p class="event-status">開催日・予約方法：未定</p></div></article>`).join('')}</div>`; }
-function home() { return `<section class="hero"><div class="hero-copy"><span class="eyebrow">DAGASHI & BAR · BEA LIFE</span><h1>あの頃のわくわく。<br>今夜の、いい時間。</h1><p>昼は駄菓子屋、夜はBAR。<br>こどもも、大人も。あなたの「好き」が見つかる場所。</p><a class="button dark" href="#day">Bea Lifeってどんなお店？ <span>↗</span></a><div class="hero-note"><span>✳</span> ふらっと寄り道、いつでも大歓迎。</div></div>${candy}</section><div class="ticker" aria-hidden="true">SWEET MEMORIES <span>✦</span> GOOD TIMES <span>✦</span> BEA LIFE <span>✦</span> SWEET MEMORIES <span>✦</span> GOOD TIMES</div><section class="section"><div class="intro"><span class="eyebrow">ONE PLACE, TWO STORIES</span><h2>お昼も、夜も、Bea Life。</h2><p>時間とともに変わる、ふたつの楽しみ方。</p></div><div class="story-grid"><a class="story day" href="#day"><div class="story-top"><span class="pill">DAY TIME</span><span class="story-icon">☀</span></div><span class="story-en">ちいさな、おいしい冒険。</span><h3>昼の駄菓子屋</h3><p>懐かしいお菓子に、新しい出会い。<br>ポケットいっぱいのわくわくを。</p><span class="story-link">駄菓子屋をのぞいてみる <b>↗</b></span></a><a class="story night" href="#night"><div class="story-top"><span class="pill">NIGHT TIME</span><span class="story-icon">☾</span></div><span class="story-en">今日の終わりに、ひと息。</span><h3>夜のBAR</h3><p>好きな一杯と、気ままなおしゃべり。<br>いつもの夜に、ちょっと彩りを。</p><span class="story-link">夜のBea Lifeを知る <b>↗</b></span></a></div></section><section class="section">${sectionTitle('NEWS & UPDATES','お店からのお知らせ','news')}${noticeList(notices.slice(0,2))}</section><section class="section">${sectionTitle('LET’S HAVE FUN','楽しみ、あつまる。','events')}${eventCards()}</section><section class="coupon-banner"><div><span class="eyebrow">A LITTLE GIFT FOR YOU</span><h2>ご来店に、ちょっといいこと。</h2><p>クーポンを保存して、お店に行く楽しみをもうひとつ。</p></div><a class="button dark" href="#coupons">クーポンを見る ↗</a></section>`; }
+function home() { return `<section class="hero"><div class="hero-copy"><span class="eyebrow">DAGASHI & BAR · BEA LIFE</span><h1>あの頃のわくわく。<br>今夜の、いい時間。</h1><p>昼は駄菓子屋、夜はBAR。<br>こどもも、大人も。あなたの「好き」が見つかる場所。</p><a class="button dark" href="#day">Bea Lifeってどんなお店？ <span>↗</span></a><div class="hero-note"><span>✳</span> ふらっと寄り道、いつでも大歓迎。</div></div>${candy}</section><div class="ticker" aria-hidden="true">SWEET MEMORIES <span>✦</span> GOOD TIMES <span>✦</span> BEA LIFE <span>✦</span> SWEET MEMORIES <span>✦</span> GOOD TIMES</div><section class="section"><div class="intro"><span class="eyebrow">ONE PLACE, TWO STORIES</span><h2>お昼も、夜も、Bea Life。</h2><p>時間とともに変わる、ふたつの楽しみ方。</p></div><div class="story-grid"><a class="story day" href="#day"><div class="story-top"><span class="pill">DAY TIME</span><span class="story-icon">☀</span></div><span class="story-en">ちいさな、おいしい冒険。</span><h3>昼の駄菓子屋</h3><p>懐かしいお菓子に、新しい出会い。<br>ポケットいっぱいのわくわくを。</p><span class="story-link">駄菓子屋をのぞいてみる <b>↗</b></span></a><a class="story night" href="#night"><div class="story-top"><span class="pill">NIGHT TIME</span><span class="story-icon">☾</span></div><span class="story-en">今日の終わりに、ひと息。</span><h3>夜のBAR</h3><p>好きな一杯と、気ままなおしゃべり。<br>いつもの夜に、ちょっと彩りを。</p><span class="story-link">夜のBea Lifeを知る <b>↗</b></span></a></div></section><section class="section">${sectionTitle('NEWS & UPDATES','お店からのお知らせ','news')}${noticeList(notices.slice(0,2))}</section><section class="section">${sectionTitle('LET’S HAVE FUN','楽しみ、あつまる。','events')}${eventCards()}</section><section class="coupon-banner"><div><span class="eyebrow">A LITTLE GIFT FOR YOU</span><h2>ご来店に、ちょっといいこと。</h2><p>クーポンを保存して、お店に行く楽しみをもうひとつ。</p></div><a class="button dark" href="#coupons">クーポンを見る ↗</a></section><section class="coupon-banner stamp-banner"><div><span class="eyebrow">VISIT & COLLECT</span><h2>また会える日を、スタンプに。</h2><p>来店1回につき1個。10個集めて、ちいさなお楽しみ。</p></div><a class="button dark" href="#stamps">スタンプカードを見る ↗</a></section>`; }
 function day() { return `${heading('DAY TIME · DAGASHI','昼の駄菓子屋','あれも、これも。選ぶ時間まで、おいしい。')}<section class="feature day-feature">${candy}<div><span class="pill">ようこそ、駄菓子の世界へ</span><h2>小さなお菓子に、<br>大きなわくわく。</h2><p>こどもの頃に好きだった味。まだ食べたことのない味。自分だけのお気に入りを、ゆっくり探してみませんか。</p></div></section><div class="info-grid"><article class="info-box"><span>🍬</span><h3>選ぶ楽しさ</h3><p>甘いものも、しょっぱいものも。品ぞろえや価格は店頭でご確認ください。</p></article><article class="info-box"><span>🎒</span><h3>家族で、友だちと</h3><p>今日のおやつを探す、気軽な寄り道に。</p></article><article class="info-box"><span>☀</span><h3>営業について</h3><p>営業時間・定休日は現在確認中です。ご来店前に最新の店舗情報をご確認ください。</p></article></div><a class="button dark" href="#shop">店舗情報を確認する ↗</a>`; }
 function night() { return `${heading('NIGHT TIME · BAR','夜のBAR','気取らず、ゆっくり。今日に乾杯。')}<section class="night-feature"><div><span class="pill">A GOOD NIGHT AT BEA LIFE</span><h2>懐かしい空間で、<br>新しいおしゃべりを。</h2><p>一日の終わりに、ほっとできる時間を。夜のBea Lifeの営業内容やメニューは、決まり次第お知らせします。</p></div><div class="glass-art" aria-hidden="true">☾<span>🍸</span><small>CHEERS TO THE LITTLE THINGS</small></div></section><div class="info-grid"><article class="info-box"><h3>ドリンクメニュー</h3><p>メニュー・料金は掲載準備中です。</p></article><article class="info-box"><h3>夜の営業時間</h3><p>営業時間・定休日は現在確認中です。</p></article><article class="info-box"><h3>ご利用のお願い</h3><p>飲酒は20歳になってから。お車を運転する方への酒類提供はできません。</p></article></div><a class="button dark" href="#shop">店舗情報を確認する ↗</a>`; }
 function coupons() { const saved = state.welcome === 'saved'; const used = state.welcome === 'used'; return `${heading('A LITTLE GIFT','クーポン','お店に行く楽しみを、もうひとつ。')}<div class="sample-note">現在は体験用のサンプルです。実店舗ではご利用いただけません。</div><article class="coupon-card"><div class="coupon-main"><span class="eyebrow">WELCOME TO BEA LIFE</span><span class="coupon-badge">${used ? '使用済み' : saved ? '保存済み' : '体験用'}</span><h2>駄菓子ひとつ<br><strong>プレゼント</strong></h2><p>はじめましての、ちいさな贈りもの。</p><span class="coupon-decoration" aria-hidden="true">🍬</span></div><div class="coupon-bottom"><p>対象商品・有効期限：未設定<br>お一人様1回限りのサンプルクーポン</p>${used ? '<button class="button" disabled>使用済みです</button>' : saved ? '<button class="button dark" data-action="use">クーポンを使う</button>' : '<button class="button dark" data-action="save">クーポンを保存する ＋</button>'}</div></article><div class="info-box coupon-help"><h3>クーポンの使い方</h3><ol><li>気になるクーポンを保存。</li><li>お会計の前に、この画面をスタッフに提示。</li><li>スタッフの確認後、「使う」を押してください。</li></ol><p>保存状態はこのブラウザに記録されます。別の端末とは共有されません。</p><button class="text-button" data-action="reset">体験用クーポンをリセット</button></div><dialog id="use-dialog"><form method="dialog"><span class="eyebrow">COUPON</span><h2>クーポンを使用しますか？</h2><p>使用後は使用済みになります。<br>これは実店舗では使えない体験用クーポンです。</p><div class="dialog-actions"><button class="button" value="cancel">キャンセル</button><button type="button" class="button dark" data-action="confirm">使用する</button></div></form></dialog>`; }
+function stamps() {
+ const { saved, count, used } = stampCard;
+ const status = used ? '特典利用済み' : count === 10 ? '特典を獲得しました！' : `特典まであと${10-count}個`;
+ return `${heading('VISIT & COLLECT','来店スタンプカード','また来たくなる、ちいさな楽しみ。')}
+ <div class="sample-note">体験版です。スタンプは来店1回につき1個、店舗スタッフが来店を確認して付与する想定です。体験版では操作をお試しいただけます。実店舗で使える特典はありません。</div>
+ <article class="stamp-card" aria-label="来店スタンプカード">
+ <div class="stamp-card-heading"><div><span class="eyebrow">BEA LIFE · LITTLE HAPPY VISITS</span><h2>10回の寄り道に、<br>ありがとう。</h2></div><span class="pill">${saved ? '保存済み' : '体験用'}</span></div>
+ <p class="stamp-count" aria-live="polite"><strong>${count}</strong> / 10 個 <span>${status}</span></p>
+ <ol class="stamp-grid" aria-label="スタンプの記録">${Array.from({length:10},(_,i)=>`<li class="stamp-slot ${i<count?'stamped':''}" aria-label="${i+1}個目：${i<count?'獲得済み':'未獲得'}"><span aria-hidden="true">${i<count?'✳':i===9?'◇':i+1}</span><small>${i===9?'特典': 'BEA LIFE'}</small></li>`).join('')}</ol>
+ <div class="stamp-reward"><h3>${used ? '特典をご利用いただきました' : count===10 ? '10個達成！体験用特典を獲得' : '10個貯まると特典を獲得'}</h3><p>特典内容・有効期限は準備中です。体験版では特典利用の流れを試せます。</p></div>
+ <div class="stamp-actions">${!saved ? '<button class="button dark" data-stamp="save">スタンプカードを保存する</button>' : `<button class="button dark" data-stamp="add" ${count>=10?'disabled':''}>スタンプを追加（体験版）</button><button class="button" data-stamp="redeem" ${count!==10||used?'disabled':''}>${used?'特典利用済み':'特典を利用する'}</button>`}</div></article>
+ <section class="info-box coupon-help"><h3>スタンプカードの使い方</h3><ol><li>カードを保存して、来店時にスタッフへ提示。</li><li>スタッフが来店1回を確認し、スタンプを1個追加。</li><li>10個貯まったら、スタッフ確認後に特典を利用。</li></ol><p>保存・追加・特典利用の状態はこのブラウザに自動保存します。別端末とは共有されず、ブラウザのデータ削除で消えます。特典利用後はリセットして、次のカードを体験できます。</p><button class="text-button" data-stamp="reset">体験用スタンプカードをリセット</button></section>
+ <dialog id="stamp-dialog"><form method="dialog"><span class="eyebrow">STAFF CHECK · DEMO</span><h2 id="stamp-dialog-title"></h2><p id="stamp-dialog-description"></p><div class="dialog-actions"><button class="button" value="cancel">キャンセル</button><button type="button" class="button dark" data-stamp="confirm">確認して実行</button></div></form></dialog>`;
+}
+function saveStampCard(next, message) {
+ try {
+  localStorage.setItem(stampKey, JSON.stringify(next));
+  stampCard = next;
+  stampPending = null;
+  render();
+  toast(message);
+ } catch { toast('保存できませんでした。ブラウザの保存設定をご確認ください。'); }
+}
+function handleStampAction(action) {
+ if (action === 'save' && !stampCard.saved) return saveStampCard({ saved:true, count:0, used:false }, 'スタンプカードを保存しました');
+ if (action === 'confirm') {
+  const pending = stampPending;
+  stampPending = null;
+  if (pending === 'add' && stampCard.saved && stampCard.count < 10) saveStampCard({...stampCard, count:stampCard.count+1}, '来店1回分のスタンプを追加しました');
+  if (pending === 'redeem' && stampCard.saved && stampCard.count === 10 && !stampCard.used) saveStampCard({...stampCard, used:true}, '体験用特典を利用しました');
+  if (pending === 'reset') saveStampCard({saved:false, count:0, used:false}, '体験用スタンプカードをリセットしました');
+  return;
+ }
+ if (action === 'add' && (!stampCard.saved || stampCard.count >= 10)) return;
+ if (action === 'redeem' && (!stampCard.saved || stampCard.count !== 10 || stampCard.used)) return;
+ const prompts = {
+  add: ['来店を確認しましたか？', '店舗スタッフが今回の来店を確認して、1個だけ追加してください。体験版では繰り返し操作できます。'],
+  redeem: ['特典を利用しますか？', 'スタッフ確認後に実行してください。利用後は使用済みになり、同じカードの特典は再利用できません。実店舗では使えない体験用特典です。'],
+  reset: ['カードをリセットしますか？', '保存状態・スタンプ・特典の利用状態を消去します。この操作は取り消せません。クーポンはそのまま残ります。']
+ };
+ if (!prompts[action]) return;
+ stampPending = action;
+ document.querySelector('#stamp-dialog-title').textContent = prompts[action][0];
+ document.querySelector('#stamp-dialog-description').textContent = prompts[action][1];
+ document.querySelector('#stamp-dialog').showModal();
+}
 function shop() { return `${heading('COME SAY HELLO','店舗情報','あなたの街の、ちいさな寄り道。')}<section class="shop-card"><div class="shop-sign"><small>駄菓子屋 BAR</small><strong>Bea Life<span>ビー ライフ</span></strong><span>☀ DAGASHI / BAR ☾</span></div><div><h2>駄菓子屋BAR「Bea Life」</h2><p>昼は駄菓子屋、夜はBAR。<br>日常に、ちょっと楽しいひとときを。</p><dl><div><dt>住所</dt><dd>確認中</dd></div><div><dt>営業時間</dt><dd>昼・夜ともに確認中</dd></div><div><dt>定休日</dt><dd>確認中</dd></div><div><dt>電話・アクセス</dt><dd>掲載準備中</dd></div></dl></div></section><div class="sample-note">正確な店舗情報は確認後に更新します。現在、地図・お問い合わせ先は掲載していません。</div><div class="story-grid"><a class="story day compact" href="#day"><h3>☀ 昼の駄菓子屋案内 ↗</h3></a><a class="story night compact" href="#night"><h3>☾ 夜のBAR案内 ↗</h3></a></div>`; }
 function render() {
  const route = location.hash.slice(1) || 'home';
  const active = pages.some(([id])=>id===route) ? route : ['day','night'].includes(route) ? 'shop' : 'home';
- let content = ({home, day, night, coupons, shop}[route] || home)();
+ let content = ({home, day, night, coupons, stamps, shop}[route] || home)();
  if (route==='news') content = `${heading('NEWS & UPDATES','お知らせ','Bea Lifeの今と、これから。')}<div class="filters" role="group" aria-label="お知らせの種類">${['すべて','お店から','駄菓子屋','BAR'].map(x=>`<button data-filter="${x}" aria-pressed="${filter===x}" class="${filter===x?'selected':''}">${x}</button>`).join('')}</div>${noticeList(filter==='すべて'?notices:notices.filter(n=>n[0]===filter))}<p class="muted">お知らせはすべて掲載サンプルです。</p>`;
  if (route==='events') content = `${heading('LET’S HAVE FUN','イベント情報','いつもの場所で、特別な時間。')}<div class="sample-note">イベントは企画イメージです。実際の開催は未定で、予約受付は行っていません。</div>${eventCards()}`;
  app.innerHTML = `<header class="site-header"><a class="logo" href="#home" aria-label="Bea Life ホーム"><span>駄菓子屋 BAR</span><strong>Bea Life<span class="logo-dot">✳</span></strong></a><nav class="desktop-nav" aria-label="メインナビゲーション">${pages.map(([id,icon,label])=>`<a href="#${id}" ${id===active?'aria-current="page"':''}>${label}</a>`).join('')}</nav><a class="header-coupon" href="#coupons">◇ <span>クーポン</span></a></header><main id="main">${content}</main><footer><a class="footer-logo" href="#home">Bea Life ✳</a><p>昼のわくわくも、夜のくつろぎも。</p><small>© Bea Life · 店舗情報・各企画は確認／準備中です。</small></footer><nav class="mobile-nav" aria-label="スマートフォンナビゲーション">${pages.map(([id,icon,label])=>`<a href="#${id}" ${id===active?'aria-current="page"':''}><span aria-hidden="true">${icon}</span>${label}</a>`).join('')}</nav><div id="toast" role="status" aria-live="polite"></div>`;
 }
 function toast(message) { clearTimeout(toastTimer); const el=document.querySelector('#toast'); el.textContent=message; el.classList.add('visible'); toastTimer=setTimeout(()=>el.classList.remove('visible'),3000); }
 function persist(value,message) { const next={...state}; if(value) next.welcome=value; else delete next.welcome; try { localStorage.setItem('bea-coupons-v1',JSON.stringify(next)); state=next; render(); toast(message); } catch { toast('保存できませんでした。ブラウザの保存設定をご確認ください。'); } }
-app.addEventListener('click',e=>{ const button=e.target.closest('button'); if(!button)return; if(button.dataset.filter){filter=button.dataset.filter;render();} const action=button.dataset.action; if(action==='save')persist('saved','クーポンを保存しました'); if(action==='use')document.querySelector('#use-dialog').showModal(); if(action==='confirm')persist('used','体験用クーポンを使用しました'); if(action==='reset')persist(null,'体験用クーポンをリセットしました'); });
+app.addEventListener('click',e=>{ const button=e.target.closest('button'); if(!button || button.disabled)return; if(button.dataset.stamp){handleStampAction(button.dataset.stamp);return;} if(button.dataset.filter){filter=button.dataset.filter;render();} const action=button.dataset.action; if(action==='save')persist('saved','クーポンを保存しました'); if(action==='use')document.querySelector('#use-dialog').showModal(); if(action==='confirm')persist('used','体験用クーポンを使用しました'); if(action==='reset')persist(null,'体験用クーポンをリセットしました'); });
 window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0);document.querySelector('main').setAttribute('tabindex','-1');document.querySelector('main').focus({preventScroll:true});});
 render();
